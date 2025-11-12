@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taka GorBD - টাকা ঘর বিডি</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+    
+    <script src="https://ad.gigapub.tech/script?id=3965"></script>
+    
+    <script src="https://adexora.com/cdn/ads.js?id=783"></script>
+
+    <style>
+        /* *** নতুন লাল-সাদা থিম এবং স্টাইলিশ হেডার *** */
+        :root {
+            /* লাল-সাদা কালার প্যালেট */
+            --primary-color: #FF0000; /* Main Red */
+            --primary-light: #FFEDED; /* Light red for backgrounds/accents */
+            --background-color: #FFFFFF; /* Main Body BG - White */
+            --primary-white: #FFFFFF;
+            
+            --text-dark: #212529; /* Dark text for readability */
+            --text-muted: #6C757D; /* Lighter text for descriptions */
+            --border-light: #E0E0E0; /* Light grey for borders */
+            
+            --gradient-bg: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); /* Red Gradient */
+            
+            --card-radius: 18px; /* Slightly larger radius */
+            --button-radius: 14px; /* Slightly larger radius */
+            --soft-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* More pronounced shadow */
+            
+            --blue-tick-color: #007BFF; /* Standard blue for verified tick */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif; /* Modern font */
+            background: var(--background-color);
+            min-height: 100vh;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: var(--background-color);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* Icon Styles */
+        .icon { width: 18px; height: 18px; vertical-align: middle; } /* Slightly larger icons */
+        .icon-lg { width: 28px; height: 28px; }
+        .icon-xl { width: 48px; height: 48px; }
+
+        /* Page Transitions */
+        .page {
+            display: none;
+            padding: 20px;
+            padding-bottom: 100px; 
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* --- নতুন: স্টাইলিশ হেডার ডিজাইন --- */
+        .profile-header-card {
+            display: flex; /* Flexbox ব্যবহার করে */
+            align-items: center; /* উল্লম্বভাবে মাঝখানে আনতে */
+            padding: 20px;
+            background: var(--primary-white);
+            border-bottom: 1px solid var(--border-light);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* হালকা ছায়া */
+            gap: 15px; /* প্রোফাইল পিকচার এবং টেক্সটের মধ্যে ব্যবধান */
+        }
+        .profile-header-card img {
+            width: 55px; /* ছোট করা হয়েছে */
+            height: 55px; /* ছোট করা হয়েছে */
+            border-radius: 50%;
+            border: 2px solid var(--primary-color); /* লাল বর্ডার */
+            flex-shrink: 0; /* ছোট হলে যেন ইমেজ না সংকুচিত হয় */
+        }
+        .profile-info {
+            display: flex;
+            flex-direction: column; /* নাম এবং ব্যালেন্স নিচে নিচে আসবে */
+            justify-content: center; /* মাঝ বরাবর আনতে */
+            flex-grow: 1; /* যতটুকু জায়গা আছে ততটুকু নেবে */
+        }
+        .profile-name-group {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* নাম এবং ব্লু টিকের মধ্যে ব্যবধান */
+            margin-bottom: 4px; /* নামের নিচে ব্যালেন্স থেকে একটু দূরে */
+        }
+        .profile-name-group h2 {
+            font-size: 19px; /* সাইজ অ্যাডজাস্ট করা হয়েছে */
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1; /* লাইন হাইট ঠিক করতে */
+        }
+        .blue-tick-icon {
+            color: var(--blue-tick-color); /* ব্লু টিকের রং */
+            width: 18px; /* ব্লু টিকের সাইজ */
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .profile-balance-text {
+            font-size: 14px; /* সাইজ অ্যাডজাস্ট করা হয়েছে */
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .profile-balance-text span {
+            color: var(--primary-color); /* লাল টেক্সট */
+            font-weight: 600;
+        }
+
+
+        /* Home Page Grid (স্টাইল আপডেট) */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            background: var(--primary-white);
+            border-radius: var(--card-radius);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--soft-shadow);
+        }
+        .stat-item h4 {
+            font-size: 13px; /* একটু বড় করা হয়েছে */
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 10px; /* ব্যবধান বাড়ানো হয়েছে */
+            font-weight: 600;
+        }
+        .stat-item p {
+            font-size: 22px; /* একটু বড় করা হয়েছে */
+            color: var(--primary-color); /* লাল টেক্সট */
+            font-weight: 700;
+        }
+
+        /* Card Styles (স্টাইল আপডেট) */
+        .card {
+            background: var(--primary-white);
+            border-radius: var(--card-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--soft-shadow);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px; /* ব্যবধান বাড়ানো হয়েছে */
+        }
+        
+        .card-header h3 {
+            font-size: 19px; /* একটু বড় করা হয়েছে */
+            color: var(--text-dark);
+        }
+
+        .card-icon {
+            width: 45px; /* একটু বড় করা হয়েছে */
+            height: 45px;
+            background: var(--primary-light); /* হালকা লাল */
+            border-radius: 12px; /* বর্ডার রেডিয়াস */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* কার্ড আইকনের SVG কালার লাল করা */
+        .card-icon svg {
+            color: var(--primary-color);
+        }
+        
+        .card-desc {
+            font-size: 15px; /* একটু বড় করা হয়েছে */
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.6; /* লাইন হাইট বাড়ানো হয়েছে */
+        }
+
+        /* Buttons (স্টাইল আপডেট) */
+        .btn {
+            border: none;
+            padding: 15px 22px; /* প্যাডিং বাড়ানো হয়েছে */
+            border-radius: var(--button-radius);
+            font-size: 17px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px; /* আইকন এবং টেক্সটের মধ্যে ব্যবধান */
+            color: var(--primary-white);
+        }
+
+        .btn-primary {
+            background: var(--gradient-bg);
+            box-shadow: 0 8px 25px rgba(255, 0, 0, 0.25); /* লাল ছায়া */
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 0, 0, 0.35); /* hover এ আরও গাঢ় ছায়া */
+        }
+        
+        .btn-secondary {
+            background: var(--primary-light); /* হালকা লাল */
+            color: var(--primary-color); /* লাল টেক্সট */
+        }
+        .btn-secondary:hover {
+            background: #FFCCCC; /* hover এ আরও হালকা লাল */
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        
+        /* Task Page (স্টাইল আপডেট) */
+        .task-item {
+            background: var(--primary-white);
+            border-radius: var(--card-radius);
+            padding: 18px; /* প্যাডিং বাড়ানো হয়েছে */
+            margin-bottom: 15px;
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* হালকা ছায়া */
+        }
+        
+        .task-icon {
+            width: 50px; /* একটু বড় করা হয়েছে */
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .task-icon.rewarded { background: var(--primary-color); } /* লাল */
+        .task-icon.telegram { background: #2AABEE; } /* টেলিগ্রামের নীল রং */
+        .task-icon.youtube { background: #FF0000; } /* ইউটিউবের লাল রং */
+        
+        .task-icon svg, .task-icon img {
+            width: 28px; /* আইকনের সাইজ */
+            height: 28px;
+            color: white;
+        }
+
+        .task-item-info {
+            flex-grow: 1;
+        }
+
+        .task-item h4 {
+            font-size: 17px; /* একটু বড় করা হয়েছে */
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+
+        .task-item p {
+            font-size: 14px; /* একটু বড় করা হয়েছে */
+            color: var(--text-muted);
+        }
+
+        .task-item button {
+            background: var(--gradient-bg);
+            color: var(--primary-white);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px; /* প্যাডিং বাড়ানো হয়েছে */
+            font-size: 15px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .task-item button:disabled {
+            background: var(--border-light);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* Bottom Navigation (স্টাইল আপডেট) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
+            background: var(--primary-white);
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0; /* প্যাডিং বাড়ানো হয়েছে */
+            z-index: 100;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px; /* ব্যবধান বাড়ানো হয়েছে */
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            min-width: 70px; /* একটু চওড়া করা হয়েছে */
+            padding: 10px 0; /* প্যাডিং বাড়ানো হয়েছে */
+        }
+
+        .nav-item.active {
+            color: var(--primary-color); /* লাল কালার */
+        }
+        
+        .nav-item svg {
+            width: 26px; /* আইকনের সাইজ */
+            height: 26px;
+        }
+
+        .nav-label {
+            font-size: 11px; /* ফন্ট সাইজ */
+            font-weight: 600;
+        }
+        
+        /* Custom Alert (লাইট মোড আপডেট) */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* একটু গাঢ় ব্যাকগ্রাউন্ড */
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px); /* ব্লার আরও বাড়ানো হয়েছে */
+        }
+
+        .custom-alert {
+            background: var(--primary-white);
+            border: 1px solid var(--border-light);
+            border-radius: 25px; /* বর্ডার রেডিয়াস বাড়ানো হয়েছে */
+            padding: 35px 30px; /* প্যাডিং বাড়ানো হয়েছে */
+            max-width: 340px; /* প্রস্থ বাড়ানো হয়েছে */
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.25); /* ছায়া বাড়ানো হয়েছে */
+            transform: scale(0.7); /* অ্যানিমেশন শুরু করার জন্য ছোট সাইজ */
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* বাউন্সি অ্যানিমেশন */
+            position: relative; 
+        }
+
+        .custom-alert.show {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .custom-alert-icon {
+            width: 70px; /* আইকনের সাইজ বাড়ানো হয়েছে */
+            height: 70px;
+            margin: 0 auto 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            background: var(--gradient-bg);
+            color: var(--primary-white);
+        }
+
+        .custom-alert-title {
+            font-size: 22px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .custom-alert-message {
+            font-size: 15px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .custom-alert-btn {
+            background: var(--gradient-bg);
+            color: var(--primary-white);
+            border: none;
+            padding: 14px 35px; /* প্যাডিং বাড়ানো হয়েছে */
+            border-radius: 30px; /* বর্ডার রেডিয়াস বাড়ানো হয়েছে */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        /* Refer Page & Home Page Referral Box (স্টাইল আপডেট) */
+        .referral-code-box {
+            background-color: var(--primary-light); /* হালকা লাল */
+            border: 1px solid var(--primary-color); /* লাল বর্ডার */
+            padding: 18px; /* প্যাডিং বাড়ানো হয়েছে */
+            border-radius: 14px; /* বর্ডার রেডিয়াস */
+            font-size: 15px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            font-weight: 600;
+            color: var(--text-dark); /* টেক্সটের রং গাঢ় */
+            margin-bottom: 20px;
+            word-break: break-all;
+            text-align: left;
+        }
+
+        /* Withdraw Page & Form Styles (লাইট মোড) */
+        .withdraw-form label, .form-note {
+            display: block;
+            font-size: 15px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .form-note span {
+            color: var(--primary-color); /* লাল */
+            font-weight: 700;
+        }
+
+        .withdraw-form select,
+        .withdraw-form input {
+            width: 100%;
+            padding: 15px; /* প্যাডিং বাড়ানো হয়েছে */
+            margin-bottom: 18px; /* ব্যবধান বাড়ানো হয়েছে */
+            border: 1px solid var(--border-light);
+            border-radius: 12px; /* বর্ডার রেডিয়াস */
+            font-size: 16px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            background-color: var(--background-color);
+            color: var(--text-dark);
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.06); /* হালকা ছায়া */
+        }
+
+        .withdraw-form input:focus,
+        .withdraw-form select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(255, 0, 0, 0.2); /* লাল ছায়া */
+        }
+
+        .withdraw-history-title {
+            font-size: 20px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            color: var(--text-dark);
+            margin-top: 35px; /* ব্যবধান বাড়ানো হয়েছে */
+            margin-bottom: 18px;
+            font-weight: 600;
+        }
+
+        .withdraw-history-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .withdraw-history-item {
+            background: var(--primary-white);
+            border-radius: 18px; /* বর্ডার রেডিয়াস */
+            padding: 18px; /* প্যাডিং বাড়ানো হয়েছে */
+            margin-bottom: 12px;
+            border: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* হালকা ছায়া */
+        }
+        
+        .withdraw-history-item-details h4 {
+            font-size: 17px; /* ফন্ট সাইজ বাড়ানো হয়েছে */
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+        .withdraw-history-item-details p {
+            font-size: 13px; /* ফন্ট সাইজ */
+            color: var(--text-muted);
+        }
+        .withdraw-status {
+            font-size: 14px; font-weight: 600; padding: 6px 12px; border-radius: 10px; white-space: nowrap;
+        }
+        .status-pending { background-color: #FFC107; color: #333; } /* হলুদ */
+        .status-approved { background-color: #4CAF50; color: #ffffff; } /* সবুজ */
+        .status-rejected { background-color: #E53935; color: #ffffff; } /* লাল */
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="profile-header-card">
+            <img id="mainProfilePic" src="https://placehold.co/100x100/FF0000/FFFFFF?text=P" alt="Profile">
+            <div class="profile-info">
+                <div class="profile-name-group">
+                    <h2 id="mainProfileName">Loading...</h2>
+                    <svg class="blue-tick-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"></path></svg>
+                </div>
+                <p class="profile-balance-text">Main Balance: <span id="mainBalanceAmount">0.00</span> <span id="currencySymbol">Points</span></p>
+            </div>
+        </div>
+
+
+        <div id="homePage" class="page active">
+            
+            <div class="card" id="earnMoreCard" style="margin-bottom: 20px;">
+                <div class="card-header">
+                    <h3 style="color: var(--text-dark);">ইনকাম করতে প্রবেশ করুন</h3>
+                    <div class="card-icon"> 
+                        <svg class="icon-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path></svg>
+                    </div>
+                </div>
+                <p class="card-desc">দৈনিক অ্যাড দেখুন এবং ইনকাম করুন।</p>
+                <button class="btn btn-primary" onclick="navigateToPage('adsPage')">
+                    <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+                    ইনকাম শুরু করুন
+                </button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h4>Today's Ads</h4>
+                    <p id="homeDailyTasks">0/0</p>
+                </div>
+                <div class="stat-item">
+                    <h4>Total Referrals</h4>
+                    <p id="homeTotalReferrals">0</p>
+                </div>
+                <div class="stat-item">
+                    <h4>Total Ads Watched</h4>
+                    <p id="homeTotalTasks">0</p>
+                </div>
+                <div class="stat-item">
+                    <h4>Total Income</h4>
+                    <p id="homeTotalIncome">0</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                   <h3>Your Referral Link</h3>
+                   <div class="card-icon">
+                        <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                   </div>
+               </div>
+               <div class="referral-code-box" id="homeReferralLink">
+                   LOADING...
+               </div>
+               <button class="btn btn-secondary" id="homeCopyReferralBtn">
+                    <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>
+                    Copy Link
+                </button>
+           </div>
+           
+           <div class="card" style="display:none;">
+                <p class="card-desc">Get a percentage of their earnings forever when you invite your friends!</p>
+                <button class="btn btn-secondary" onclick="navigateToPage('referPage')">Invite Now</button>
+            </div>
+        </div>
+
+        <div id="adsPage" class="page">
+            
+            <div class="task-item" id="rewardedAdTask">
+                <div class="task-icon rewarded">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+                </div>
+                <div class="task-item-info">
+                    <h4>Rewarded Ad</h4>
+                    <p>Earn <span id="bonusAdPoints">0</span> <span class="currencySymbol">Points</span> for every ad.</p>
+                </div>
+                <button id="watchRewardedAdBtn">Watch Ad</button>
+            </div>
+            
+            <div class="task-item" id="standardAdTask">
+                <div class="task-icon rewarded" style="background: #555;">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.9-2-2-2zm-2 14H6V8h12v10z"></path></svg>
+                </div>
+                <div class="task-item-info">
+                    <h4>Standard Ad</h4>
+                    <p>Earn <span id="standardAdPoints">0</span> <span class="currencySymbol">Points</span> for every ad.</p>
+                </div>
+                <button id="startTaskBtn">Watch Ad</button>
+            </div>
+
+            <h3 class="withdraw-history-title" style="margin-top: 30px; margin-bottom: 15px;">Bonus Tasks</h3>
+            <div id="dynamicTasksList">
+                </div>
+        </div>
+
+        <div id="referPage" class="page">
+             <div class="card">
+                <div class="overview-header" style="text-align:center; margin-bottom: 20px;">
+                    <h2>Invite Friends & Earn More!</h2>
+                    <p class="card-desc" style="margin-top:15px;" id="referralBonusText">Share your referral link and earn!</p>
+                </div>
+                <div class="refer-details">
+                    <h3>Your Referral Link:</h3>
+                    <div class="referral-code-box" id="userReferralLink">
+                        LOADING...
+                    </div>
+                    <button class="btn btn-primary" id="copyReferralLinkBtn">
+                         <svg class="icon" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-white);"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>
+                        Copy Link
+                    </button>
+                    <div class="referral-share-buttons" style="margin-top: 15px;">
+                        <button class="btn btn-secondary" id="shareOnTelegramBtn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-color);"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6.241 8.809l-2.733 12.872c-.144.646-.516.804-1.077.513l-4.148-3.085-1.996 1.921c-.22.213-.393.385-.758.385l.23-.974 4.326-4.049 4.96-7.85c.218-.352-.063-.535-.477-.384l-6.19 3.868-4.072-1.272c-.633-.198-.992-.303-.98-.644.004-.11.134-.202.408-.315.617-.257 12.409-4.57 13.064-4.82.72-.27 1.341.171 1.054.78z"></path></svg>
+                            Telegram
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="stats-grid" style="margin-top: 30px;">
+                    <div class="stat-item">
+                        <h4>Total Friends</h4>
+                        <p id="referredUsersCount">0</p>
+                    </div>
+                    <div class="stat-item">
+                        <h4>Referral Earnings</h4>
+                        <p id="referralPointsEarned">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="withdrawPage" class="page">
+             <div class="card">
+                <div class="overview-header" style="text-align:center; margin-bottom: 20px;">
+                    <h2>Request Withdraw</h2>
+                    <p class="card-desc" style="margin-top:15px;">Your current balance: <span id="withdrawCurrentBalance">0</span> <span class="currencySymbol">Points</span></p>
+                </div>
+                <div class="withdraw-form">
+                    
+                    <p class="form-note" id="referralWithdrawNote" style="display:none;">
+                        Note: You need at least <span>0</span> referrals to be eligible. Your referrals: <span>0</span>
+                    </p>
+
+                    <label for="paymentMethod">Method</label>
+                    <select id="paymentMethod">
+                        </select>
+
+                    <label for="paymentAddress">Account Number/ID</label>
+                    <input type="text" id="paymentAddress" placeholder="e.g., wallet address, phone number">
+
+                    <label for="withdrawAmount">Amount (<span class="currencySymbol">Points</span>)</label>
+                    <input type="number" id="withdrawAmount" placeholder="Min: 0">
+
+                    <button class="btn btn-primary" id="submitWithdrawBtn">Submit Request</button>
+                </div>
+
+                <h3 class="withdraw-history-title">Withdrawal History</h3>
+                <ul id="withdrawHistoryList" class="withdraw-history-list">
+                    </ul>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active" data-page="homePage">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
+                <div class="nav-label">Home</div>
+            </div>
+            <div class="nav-item" data-page="adsPage">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 8V7l-3 2-3-2v1l3 2 3-2zm1-5H2C.9 3 0 3.9 0 5v14c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM8 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm6 12H2v-1.4c0-2 4-3.1 6-3.1s6 1.1 6 3.1V18zm6-1.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"></path></svg>
+                <div class="nav-label">Tasks</div>
+            </div>
+            <div class="nav-item" data-page="withdrawPage">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path></svg>
+                <div class="nav-label">Wallet</div>
+            </div>
+             <div class="nav-item" data-page="profilePage">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+                <div class="nav-label">Profile</div>
+            </div>
+            
+            <div class="nav-item" data-page="referPage" style="display:none;">
+                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path></svg>
+            </div>
+            <div class="nav-item" data-page="supportPage" style="display:none;">
+                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zM11 16h2v2h-2zm1-10c-1.66 0-3 1.34-3 3h2c0-.55.45-1 1-1s1 .45 1 1c0 1.11-.9 1.62-2.34 2.15C8.48 12.51 8 13.05 8 14h2c0-.64.52-1.11 1.66-1.58C13.2 11.99 14 11.39 14 10c0-1.66-1.34-3-3-3z"></path></svg>
+            </div>
+        </div>
+        
+        <div id="profilePage" class="page">
+            <div class="card">
+                <p class="card-desc">Invite friends and earn <span id="profileReferralBonusText">...</span> per referral.</p>
+                <button class="btn btn-primary" onclick="navigateToPage('referPage')">Refer & Earn More!</button>
+            </div>
+
+            <h3 class="withdraw-history-title" style="margin-top: 20px; margin-bottom: 20px;">Support & Channels</h3>
+            <div id="supportLinksList">
+                </div>
+        </div>
+    </div>
+
+    <div class="custom-alert-overlay" id="customAlertOverlay">
+        <div class="custom-alert" id="customAlert">
+            <div class="custom-alert-icon" id="customAlertIcon">🎉</div>
+            <div class="custom-alert-title" id="customAlertTitle">Success!</div>
+            <div class="custom-alert-message" id="customAlertMessage">Operation completed.</div>
+            <button class="custom-alert-btn" onclick="closeCustomAlert()">OK</button>
+        </div>
+    </div>
+
+    <div class="custom-alert-overlay" id="taskTimerOverlay">
+        <div class="custom-alert">
+            <div class="custom-alert-icon" id="taskTimerIcon">⏳</div>
+            <div class="custom-alert-title" id="taskTimerTitle">Task In Progress</div>
+            <div class="custom-alert-message" id="taskTimerMessage">Please wait for <span id="taskTimerCountdown">15</span> seconds.</div>
+            <button class="custom-alert-btn" id="claimTaskPointsBtn" style="display:none;">Claim Points</button>
+        </div>
+    </div>
+    
+    <div class="custom-alert-overlay" id="infoPopupOverlay">
+        <div class="custom-alert" id="infoPopup">
+            <button id="infoPopupCloseBtn" style="position: absolute; top: 15px; right: 15px; background: var(--border-light); border: none; border-radius: 50%; width: 30px; height: 30px; color: var(--text-dark); font-size: 16px; cursor: pointer; line-height: 30px;">&times;</button>
+            
+            <div class="custom-alert-icon" id="infoPopupIcon">💡</div>
+            <div class="custom-alert-title" id="infoPopupTitle">Welcome!</div>
+            <div class="custom-alert-message" id="infoPopupMessage" style="text-align: left; line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap;">
+                Loading details...
+            </div>
+            <button class="custom-alert-btn" id="infoPopupVideoBtn" style="display:none;">
+                 <svg class="icon" viewBox="0 0 24 24" fill="currentColor" style="color: var(--primary-white);"><path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path></svg>
+                কিভাবে কাজ করবেন দেখুন
+            </button>
+            <button class="custom-alert-btn" id="infoPopupOkBtn" style="display:none;">OK</button>
+        </div>
+    </div>
+
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        const defaultProfilePic = 'https://placehold.co/100x100/FF0000/FFFFFF?text=P';
+        
+        // *** বট ইউজারনেম পরিবর্তন করা হয়েছে ***
+        const BOT_USERNAME = "Taka_GorBD_Bot";
+        const APP_SHORT_NAME = "app"; 
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwXXpkqUMxmySgQhwzkeopSzLpf0Fn1q4",
+            authDomain: "airdrop-9d7e8.firebaseapp.com",
+            databaseURL: "https://airdrop-9d7e8-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "airdrop-9d7e8",
+            storageBucket: "airdrop-9d7e8.firebasestorage.app",
+            messagingSenderId: "199102942810",
+            appId: "1:199102942810:web:e08b23b8d4ce4f3c04d263",
+            measurementId: "G-S8686TF4JP"
+        };
+    
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const analytics = firebase.analytics();
+
+        let currentUser = null; 
+        let appConfig = null;
+        
+        const adNetworks = ['monetag', 'gigapub', 'adexora'];
+        let standardAdIndex = 0; 
+        let rewardedAdIndex = 0; 
+        
+        function loadMonetagSDK(zoneId) {
+            if (!zoneId) {
+                console.warn("Monetag Zone ID not found in config.");
+                return;
+            }
+            if (document.getElementById('monetag-sdk')) {
+                console.log("Monetag SDK already loaded.");
+                return;
+            }
+            
+            try {
+                const script = document.createElement('script');
+                script.id = 'monetag-sdk';
+                script.src = '//libtl.com/sdk.js';
+                script.dataset.zone = zoneId;
+                script.dataset.sdk = `show_${zoneId}`; 
+                script.onerror = () => console.error("Monetag SDK failed to load.");
+                script.onload = () => console.log("Monetag SDK loaded successfully for zone:", zoneId);
+                document.head.appendChild(script);
+            } catch (e) {
+                console.error("Error loading Monetag SDK:", e);
+            }
+        }
+        
+        function callMonetagAd(type = 'default') {
+            return new Promise((resolve, reject) => {
+                if (!appConfig || !appConfig.monetagZoneId) {
+                    return reject("Monetag config not loaded.");
+                }
+                
+                const zoneId = appConfig.monetagZoneId;
+                const funcName = `show_${zoneId}`;
+                
+                if (typeof window[funcName] === 'function') {
+                    const adFunction = window[funcName];
+                    const adPromise = (type === 'pop') ? adFunction('pop') : adFunction();
+                    
+                    adPromise.then(resolve).catch(reject);
+                    
+                } else {
+                    reject("Ad function not found. SDK may still be loading or failed.");
+                }
+            });
+        }
+
+
+        // Helper Functions
+        function formatCurrency(points) {
+            const currency = appConfig?.currencySymbol || "Points";
+            const rate = appConfig?.dollarExchangeRate || 0;
+            
+            if (currency === "Points" || !rate) {
+                return `${points.toLocaleString()} ${currency}`;
+            }
+            return `${(points / rate).toFixed(2)} ${currency}`;
+        }
+        
+        function getRawPoints(formattedAmount) {
+             const currency = appConfig?.currencySymbol || "Points";
+             const rate = appConfig?.dollarExchangeRate || 0;
+             const amount = parseFloat(formattedAmount);
+             
+             if (currency === "Points" || !rate) {
+                return amount;
+             }
+             return Math.round(amount * rate);
+        }
+
+        function checkDailyReset(userData) {
+            const today = new Date().toDateString();
+            if (userData.lastTaskDate !== today) {
+                db.collection('users').doc(userData.userId).update({
+                    dailyTasksCompleted: 0,
+                    lastTaskDate: today
+                })
+                .then(() => {
+                    console.log("Daily tasks reset successfully.");
+                    currentUser.dailyTasksCompleted = 0;
+                    currentUser.lastTaskDate = today;
+                    updateUI();
+                })
+                .catch(error => {
+                    console.error("Error resetting daily tasks: ", error);
+                });
+            }
+        }
+
+        async function fetchAppConfig() {
+            try {
+                const doc = await db.collection('config').doc('appConfig').get();
+                if (doc.exists) {
+                    appConfig = doc.data();
+                    console.log("App configuration loaded:", appConfig);
+                    loadMonetagSDK(appConfig.monetagZoneId);
+                } else {
+                    console.log("No app configuration found, setting defaults.");
+                    appConfig = {
+                        standardAdPoints: 10,
+                        bonusAdPoints: 20,
+                        dailyTaskLimit: 10,
+                        dollarExchangeRate: 1000,
+                        currencySymbol: "Points",
+                        referralPercentage: 10,
+                        minWithdrawAmount: 5000,
+                        referralBonus: 0,
+                        minReferralForWithdraw: 0,
+                        joiningBonus: 50,
+                        paymentMethods: [],
+                        dynamicTasks: [],
+                        supportLinks: [],
+                        popupTitle: "Welcome!",
+                        popupMessage: "কাজ শুরু করতে 'Tasks' বাটনে ক্লিক করুন। \n\nজয়েনিং বোনাস: 50 Points!\nপ্রতি রেফারে ১০% কমিশন।",
+                        popupVideoLink: "https://t.me/your_channel_link", 
+                        popupEnabled: true 
+                    };
+                }
+            } catch (error) {
+                console.error("Error fetching app config:", error);
+                appConfig = { standardAdPoints: 10, bonusAdPoints: 20, dailyTaskLimit: 10, dollarExchangeRate: 1000, currencySymbol: "Points", referralPercentage: 10, minWithdrawAmount: 5000, referralBonus: 0, minReferralForWithdraw: 0, joiningBonus: 0, paymentMethods: [], dynamicTasks: [], supportLinks: [], popupTitle: "Error", popupMessage: "Could not load config.", popupVideoLink: "", popupEnabled: false };
+            }
+        }
+
+        // UI Update Functions
+        function updateUI() {
+            if (!currentUser || !appConfig) return; 
+
+            const userDataFromTelegram = tg.initDataUnsafe.user;
+            const balance = currentUser.balance || 0;
+            const totalEarnings = currentUser.totalEarnings || 0;
+            const referralEarnings = currentUser.referralEarnings || 0;
+            const tasksCompleted = currentUser.dailyTasksCompleted || 0;
+            const taskLimit = appConfig.dailyTaskLimit || 10;
+            const currency = appConfig.currencySymbol || "Points";
+
+            document.querySelectorAll('.currencySymbol').forEach(el => el.textContent = currency);
+
+            // Main Profile Header
+            const fullName = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || 'User';
+            document.getElementById('mainProfilePic').src = currentUser.photo_url || defaultProfilePic;
+            document.getElementById('mainProfileName').textContent = fullName;
+            document.getElementById('mainBalanceAmount').textContent = formatCurrency(balance);
+            document.getElementById('currencySymbol').textContent = currency;
+
+            // Home Page Stats
+            document.getElementById('homeDailyTasks').textContent = `${tasksCompleted}/${taskLimit}`;
+            document.getElementById('homeTotalReferrals').textContent = currentUser.referredUsersCount || 0;
+            document.getElementById('homeTotalTasks').textContent = currentUser.totalTasksCompleted || 0;
+            document.getElementById('homeTotalIncome').textContent = formatCurrency(totalEarnings);
+
+            // Task page updates
+            document.getElementById('standardAdPoints').textContent = appConfig.standardAdPoints || 0;
+            document.getElementById('bonusAdPoints').textContent = appConfig.bonusAdPoints || 0;
+            
+            document.getElementById('standardAdTask').style.display = (appConfig.standardAdPoints || 0) > 0 ? 'flex' : 'none';
+            document.getElementById('rewardedAdTask').style.display = (appConfig.bonusAdPoints || 0) > 0 ? 'flex' : 'none';
+
+            const limitReached = tasksCompleted >= taskLimit;
+            document.getElementById('startTaskBtn').disabled = limitReached;
+            document.getElementById('watchRewardedAdBtn').disabled = limitReached;
+            if (limitReached) {
+                document.getElementById('startTaskBtn').textContent = `Limit Reached`;
+                document.getElementById('watchRewardedAdBtn').textContent = `Limit Reached`;
+            } else {
+                 document.getElementById('startTaskBtn').textContent = 'Watch Ad';
+                 document.getElementById('watchRewardedAdBtn').textContent = 'Watch Ad';
+            }
+
+            // --- নতুন: হোমপেজ ও রেফার পেজ উভয় যায়গায় লিঙ্ক আপডেট ---
+            const referralLink = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=ref_${currentUser.userId}`;
+            document.getElementById('userReferralLink').textContent = referralLink; 
+            document.getElementById('homeReferralLink').textContent = referralLink; // হোমপেজেও আপডেট
+            
+            document.getElementById('referredUsersCount').textContent = currentUser.referredUsersCount || 0;
+            document.getElementById('referralPointsEarned').textContent = formatCurrency(referralEarnings);
+            
+            const refBonus = appConfig.referralBonus || 0;
+            const refPercent = appConfig.referralPercentage || 0;
+            let refText = "";
+            if (refBonus > 0) {
+                refText = `Invite friends and earn ${formatCurrency(refBonus)} per referral.`;
+            } else if (refPercent > 0) {
+                refText = `Invite friends and earn ${refPercent}% of their task earnings.`;
+            }
+            document.getElementById('referralBonusText').textContent = refText;
+            document.getElementById('profileReferralBonusText').textContent = refBonus > 0 ? formatCurrency(refBonus) : `${refPercent}%`;
+
+
+            // Withdraw Page Update
+            const minWithdraw = appConfig.minWithdrawAmount || 0;
+            document.getElementById('withdrawCurrentBalance').textContent = formatCurrency(balance);
+            document.getElementById('withdrawAmount').placeholder = `Min: ${formatCurrency(minWithdraw)}`;
+            
+            const minRefs = appConfig.minReferralForWithdraw || 0;
+            if (minRefs > 0) {
+                const userRefs = currentUser.referredUsersCount || 0;
+                const note = document.getElementById('referralWithdrawNote');
+                note.style.display = 'block';
+                note.innerHTML = `Note: You need at least <span>${minRefs}</span> referrals to be eligible. Your referrals: <span>${userRefs}</span>`;
+            } else {
+                document.getElementById('referralWithdrawNote').style.display = 'none';
+            }
+
+            populatePaymentMethods();
+            renderWithdrawalHistory(); 
+            renderDynamicTasks(); 
+            renderSupportLinks(); 
+        }
+
+        // Custom Alert Functions
+        function showCustomAlert(title, message, icon = '🎉') {
+            document.getElementById('customAlertTitle').textContent = title;
+            document.getElementById('customAlertMessage').textContent = message;
+            document.getElementById('customAlertIcon').textContent = icon;
+            const overlay = document.getElementById('customAlertOverlay');
+            const alertBox = document.getElementById('customAlert');
+            overlay.style.display = 'flex';
+            setTimeout(() => alertBox.classList.add('show'), 10);
+        }
+
+        function closeCustomAlert() {
+            const overlay = document.getElementById('customAlertOverlay');
+            const alertBox = document.getElementById('customAlert');
+            alertBox.classList.remove('show');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        // Task Timer Modal Functions
+        let timerInterval;
+        let currentTaskLink = null;
+        let currentTaskPoints = 0;
+        let currentTaskId = null;
+
+        function showTaskTimer(duration, link, points, taskId) {
+            currentTaskLink = link;
+            currentTaskPoints = points;
+            currentTaskId = taskId;
+            
+            const timerOverlay = document.getElementById('taskTimerOverlay');
+            const timerCountdown = document.getElementById('taskTimerCountdown');
+            const claimBtn = document.getElementById('claimTaskPointsBtn');
+
+            timerCountdown.textContent = duration;
+            claimBtn.style.display = 'none'; 
+            claimBtn.disabled = true;
+            document.getElementById('taskTimerTitle').textContent = 'Task In Progress';
+            document.getElementById('taskTimerMessage').textContent = `Please wait for ${duration} seconds.`;
+
+            timerOverlay.style.display = 'flex';
+            setTimeout(() => document.getElementById('taskTimerOverlay').querySelector('.custom-alert').classList.add('show'), 10);
+
+            if (currentTaskLink) {
+                try { tg.openLink(currentTaskLink); } catch (e) { console.error(e); }
+            }
+
+            let timeLeft = duration;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerCountdown.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerCountdown.textContent = '0';
+                    document.getElementById('taskTimerTitle').textContent = 'Task Completed!';
+                    document.getElementById('taskTimerMessage').textContent = 'You can now claim your points.';
+                    claimBtn.style.display = 'block';
+                    claimBtn.disabled = false;
+                }
+            }, 1000);
+        }
+
+        function closeTaskTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('taskTimerOverlay').querySelector('.custom-alert').classList.remove('show');
+            setTimeout(() => document.getElementById('taskTimerOverlay').style.display = 'none', 300);
+        }
+
+        document.getElementById('claimTaskPointsBtn').addEventListener('click', async () => {
+            closeTaskTimer();
+            if (currentTaskId && currentUser.userId && currentTaskPoints > 0) {
+                try {
+                     const userDocRef = db.collection('users').doc(currentUser.userId);
+                     const today = new Date().toDateString();
+                     
+                     await db.runTransaction(async (transaction) => {
+                         const userDoc = await transaction.get(userDocRef);
+                         if (!userDoc.exists) throw "User document does not exist!";
+                         
+                         const userData = userDoc.data();
+                         if(userData.completedTasks && (userData.completedTasks[currentTaskId] === today || userData.completedTasks[currentTaskId] === 'completed')) {
+                             showCustomAlert('Already Claimed', 'You have already completed this task.', '😅');
+                             return;
+                         }
+                         
+                         const task = appConfig.dynamicTasks.find(t => t.id === currentTaskId);
+                         const isOneTime = task.type === 'one-time';
+
+                         transaction.update(userDocRef, {
+                            balance: firebase.firestore.FieldValue.increment(currentTaskPoints),
+                            totalEarnings: firebase.firestore.FieldValue.increment(currentTaskPoints),
+                            [`completedTasks.${currentTaskId}`]: isOneTime ? 'completed' : today
+                         });
+                         
+                        if (userData.referredBy && (appConfig.referralPercentage || 0) > 0) {
+                            const referralBonus = Math.round(currentTaskPoints * (appConfig.referralPercentage / 100));
+                            if(referralBonus > 0) {
+                                const referrerDocRef = db.collection('users').doc(userData.referredBy);
+                                transaction.update(referrerDocRef, {
+                                    balance: firebase.firestore.FieldValue.increment(referralBonus),
+                                    referralEarnings: firebase.firestore.FieldValue.increment(referralBonus)
+                                });
+                            }
+                        }
+                     });
+                     
+                    showCustomAlert('Task Claimed!', `You earned ${formatCurrency(currentTaskPoints)}!`, '💰');
+                    tg.HapticFeedback.notificationOccurred('success');
+
+                } catch (error) {
+                    console.error("Error claiming dynamic task points:", error);
+                    showCustomAlert('Error', 'Failed to claim points. Please try again.', '❌');
+                }
+            }
+        });
+
+        // --- নতুন: গ্রিটিং পপআপ ফাংশন ---
+        function getGreeting() {
+            const hour = new Date().getHours();
+            if (hour < 12) {
+                return { text: 'Good Morning', icon: '👋' };
+            } else if (hour < 18) {
+                return { text: 'Good Afternoon', icon: '☀️' };
+            } else {
+                return { text: 'Good Night', icon: '🌙' };
+            }
+        }
+
+        function showGreetingPopup() {
+            if (sessionStorage.getItem('greetingShown')) {
+                return; // সেশনস্টোরেজে সেভ থাকলে আর দেখাবে না
+            }
+
+            const greeting = getGreeting();
+            const name = currentUser.first_name || 'User';
+
+            const overlay = document.getElementById('infoPopupOverlay');
+            const popup = document.getElementById('infoPopup');
+            
+            document.getElementById('infoPopupIcon').textContent = greeting.icon;
+            document.getElementById('infoPopupTitle').textContent = `${greeting.text}, ${name}!`;
+            document.getElementById('infoPopupMessage').innerText = "Welcome back! We're happy to see you. Ready to start earning today?";
+            
+            document.getElementById('infoPopupVideoBtn').style.display = 'none';
+            document.getElementById('infoPopupOkBtn').style.display = 'flex'; // ওকে বাটন দেখানো হচ্ছে
+
+            overlay.style.display = 'flex';
+            setTimeout(() => popup.classList.add('show'), 10);
+
+            sessionStorage.setItem('greetingShown', 'true'); // সেশনস্টোরেজে সেভ করা
+        }
+        
+        // পুরনো ইনফো পপআপ (এখন আর ব্যবহৃত হচ্ছে না, তবে রাখা হলো)
+        function showInfoPopup() {
+            const overlay = document.getElementById('infoPopupOverlay');
+            const popup = document.getElementById('infoPopup');
+            
+            document.getElementById('infoPopupIcon').textContent = '💡';
+            document.getElementById('infoPopupTitle').textContent = appConfig.popupTitle || "Welcome!";
+            document.getElementById('infoPopupMessage').innerText = appConfig.popupMessage || "Welcome to our app. Start earning now!";
+            
+            const videoLink = appConfig.popupVideoLink || "";
+            if (videoLink) {
+                document.getElementById('infoPopupVideoBtn').style.display = 'flex';
+                document.getElementById('infoPopupVideoBtn').onclick = () => tg.openLink(videoLink);
+            } else {
+                document.getElementById('infoPopupVideoBtn').style.display = 'none';
+            }
+            
+            document.getElementById('infoPopupOkBtn').style.display = 'none'; // ওকে বাটন হাইড
+
+            overlay.style.display = 'flex';
+            setTimeout(() => popup.classList.add('show'), 10);
+        }
+
+        function closeInfoPopup() {
+            const overlay = document.getElementById('infoPopupOverlay');
+            const popup = document.getElementById('infoPopup');
+            popup.classList.remove('show');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+        
+        document.getElementById('infoPopupCloseBtn').addEventListener('click', closeInfoPopup);
+        document.getElementById('infoPopupOkBtn').addEventListener('click', closeInfoPopup);
+
+
+        // Reward Functions (for ads)
+        async function rewardUser(points, isAdTask = true) {
+            if (!currentUser || !appConfig) {
+                showCustomAlert('Error', 'App data not loaded. Please try again.', '❌');
+                return;
+            }
+
+            checkDailyReset(currentUser);
+
+            if (currentUser.dailyTasksCompleted >= appConfig.dailyTaskLimit && isAdTask) {
+                showCustomAlert('Limit Reached', 'You have completed all daily tasks. Come back tomorrow!', '⏰');
+                return;
+            }
+
+            try {
+                const userDocRef = db.collection('users').doc(currentUser.userId);
+                
+                await db.runTransaction(async (transaction) => {
+                    const userDoc = await transaction.get(userDocRef);
+                    if (!userDoc.exists) throw "User not found";
+                    
+                    const userData = userDoc.data();
+                    
+                    const updates = {
+                        balance: firebase.firestore.FieldValue.increment(points),
+                        totalEarnings: firebase.firestore.FieldValue.increment(points)
+                    };
+                    if (isAdTask) {
+                        updates.dailyTasksCompleted = firebase.firestore.FieldValue.increment(1);
+                        updates.totalTasksCompleted = firebase.firestore.FieldValue.increment(1);
+                    }
+                    transaction.update(userDocRef, updates);
+
+                    if (userData.referredBy && (appConfig.referralPercentage || 0) > 0) {
+                        const referralBonus = Math.round(points * (appConfig.referralPercentage / 100));
+                        if(referralBonus > 0) {
+                            const referrerDocRef = db.collection('users').doc(userData.referredBy);
+                             transaction.update(referrerDocRef, {
+                                balance: firebase.firestore.FieldValue.increment(referralBonus),
+                                referralEarnings: firebase.firestore.FieldValue.increment(referralBonus)
+                            });
+                        }
+                    }
+                });
+
+                const remaining = appConfig.dailyTaskLimit - (currentUser.dailyTasksCompleted + 1);
+                showCustomAlert('Task Completed!', `You earned ${formatCurrency(points)}! ${remaining} daily tasks remaining.`, '💰');
+                tg.HapticFeedback.notificationOccurred('success');
+
+            } catch (error) {
+                console.error("Error rewarding user:", error);
+                showCustomAlert('Error', 'Failed to update points. Please try again.', '❌');
+            }
+        }
+
+        // Navigation Logic
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+
+        function navigateToPage(pageId) {
+             pages.forEach(p => p.classList.remove('active'));
+             const page = document.getElementById(pageId);
+             if (page) {
+                 page.classList.add('active');
+             }
+
+             let activeNavPage = pageId;
+             if (pageId === 'referPage') {
+                 activeNavPage = 'profilePage'; 
+             }
+
+             navItems.forEach(item => {
+                if (item.style.display !== 'none') {
+                     item.classList.toggle('active', item.dataset.page === activeNavPage);
+                }
+             });
+        }
+
+        navItems.forEach(item => {
+            if (item.style.display !== 'none') {
+                item.addEventListener('click', () => {
+                    navigateToPage(item.dataset.page);
+                });
+            }
+        });
+
+        // Ad Logic
+        document.getElementById('startTaskBtn').addEventListener('click', function() {
+            if (currentUser.dailyTasksCompleted >= appConfig.dailyTaskLimit) return;
+            
+            const button = this; 
+            const cooldownTime = 3000; 
+            
+            button.disabled = true; 
+            button.textContent = 'Loading...';
+
+            const networkToCall = adNetworks[standardAdIndex];
+            let adPromise;
+            console.log(`Calling Standard Ad: ${networkToCall} (Index: ${standardAdIndex})`);
+
+            try {
+                switch (networkToCall) {
+                    case 'monetag': adPromise = callMonetagAd('default'); break;
+                    case 'gigapub': adPromise = window.showGiga ? window.showGiga() : Promise.reject("GigaPub SDK not loaded"); break;
+                    case 'adexora': adPromise = window.showAdexora ? window.showAdexora() : Promise.reject("Adexora SDK not loaded"); break;
+                    default: adPromise = Promise.reject("Unknown ad network");
+                }
+            } catch (err) { adPromise = Promise.reject(err); }
+
+            standardAdIndex = (standardAdIndex + 1) % adNetworks.length;
+
+            adPromise.then(() => {
+                rewardUser(appConfig.standardAdPoints, true);
+                button.textContent = 'Loading Next Ad...'; 
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Watch Ad';
+                }, cooldownTime);
+            }).catch(e => {
+                console.error(`${networkToCall} ad failed:`, e);
+                showCustomAlert('Ad Error', 'The ad failed to load. Please try again.', '❌');
+                button.disabled = false;
+                button.textContent = 'Watch Ad';
+            });
+        });
+
+        document.getElementById('watchRewardedAdBtn').addEventListener('click', function() {
+            if (currentUser.dailyTasksCompleted >= appConfig.dailyTaskLimit) return;
+
+            const button = this; 
+            const cooldownTime = 3000; 
+            
+            button.disabled = true; 
+            button.textContent = 'Loading...';
+
+            const networkToCall = adNetworks[rewardedAdIndex];
+            let adPromise;
+            console.log(`Calling Rewarded Ad: ${networkToCall} (Index: ${rewardedAdIndex})`);
+            
+            try {
+                switch (networkToCall) {
+                    case 'monetag': adPromise = callMonetagAd('pop'); break;
+                    case 'gigapub': adPromise = window.showGiga ? window.showGiga() : Promise.reject("GigaPub SDK not loaded"); break;
+                    case 'adexora': adPromise = window.showAdexora ? window.showAdexora() : Promise.reject("Adexora SDK not loaded"); break;
+                    default: adPromise = Promise.reject("Unknown ad network");
+                }
+            } catch (err) { adPromise = Promise.reject(err); }
+
+            rewardedAdIndex = (rewardedAdIndex + 1) % adNetworks.length;
+
+            adPromise.then(() => {
+                rewardUser(appConfig.bonusAdPoints, true);
+                button.textContent = 'Loading Next Ad...'; 
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Watch Ad';
+                }, cooldownTime);
+            }).catch(e => {
+                console.error(`${networkToCall} ad failed:`, e);
+                showCustomAlert('Ad Not Available', 'The bonus ad is not available. Try again later.', '⏳');
+                button.disabled = false;
+                button.textContent = 'Watch Ad';
+            });
+        });
+
+
+        // Refer Page event listeners
+        document.getElementById('copyReferralLinkBtn').addEventListener('click', async () => {
+            const referralLink = document.getElementById('userReferralLink').textContent; 
+            try {
+                await navigator.clipboard.writeText(referralLink);
+                showCustomAlert('Copied!', 'Referral link copied to clipboard.', '📋');
+                tg.HapticFeedback.notificationOccurred('success');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showCustomAlert('Error', 'Failed to copy link.', '❌');
+            }
+        });
+        
+        // --- নতুন: হোমপেজের কপি বাটন ইভেন্ট ---
+        document.getElementById('homeCopyReferralBtn').addEventListener('click', async () => {
+            const referralLink = document.getElementById('homeReferralLink').textContent; 
+            try {
+                await navigator.clipboard.writeText(referralLink);
+                showCustomAlert('Copied!', 'Referral link copied to clipboard.', '📋');
+                tg.HapticFeedback.notificationOccurred('success');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showCustomAlert('Error', 'Failed to copy link.', '❌');
+            }
+        });
+
+        document.getElementById('shareOnTelegramBtn').addEventListener('click', () => {
+            const referrerUserId = currentUser.userId; 
+            const shareUrl = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=ref_${referrerUserId}`;
+            const message = `Join this awesome app and earn! Use my referral link to get started: ${shareUrl}`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(message)}`);
+        });
+
+        // Withdrawal Page Functions
+        function populatePaymentMethods() {
+            const selectElement = document.getElementById('paymentMethod');
+            selectElement.innerHTML = '';
+            if (appConfig && appConfig.paymentMethods && appConfig.paymentMethods.length > 0) {
+                appConfig.paymentMethods.forEach(method => {
+                    const min = method.minAmount || appConfig.minWithdrawAmount;
+                    selectElement.innerHTML += `<option value="${method.id}">${method.name} (Min: ${formatCurrency(min)})</option>`;
+                });
+            } else {
+                selectElement.innerHTML = '<option value="" disabled>No methods available</option>';
+            }
+        }
+
+        async function renderWithdrawalHistory() {
+            const historyList = document.getElementById('withdrawHistoryList');
+            historyList.innerHTML = ''; 
+            if (!currentUser || !currentUser.userId) return;
+
+            try {
+                const snapshot = await db.collection('withdrawals')
+                                         .where('userId', '==', currentUser.userId)
+                                         .orderBy('createdAt', 'desc')
+                                         .limit(10)
+                                         .get();
+                
+                if (snapshot.empty) {
+                    historyList.innerHTML = '<li class="card-desc" style="text-align:center;">No withdrawal history found.</li>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const statusClass = `status-${data.status.toLowerCase()}`;
+                    const date = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleString() : 'N/A';
+                    historyList.innerHTML += `
+                        <li class="withdraw-history-item">
+                            <div class="withdraw-history-item-details">
+                                <h4>${formatCurrency(data.amount)} (${data.paymentMethodName})</h4>
+                                <p>${data.paymentAddress}</p>
+                                <p>${date}</p>
+                            </div>
+                            <span class="withdraw-status ${statusClass}">${data.status}</span>
+                        </li>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error fetching withdrawal history:", error);
+                historyList.innerHTML = '<li class="card-desc" style="text-align:center; color:red;">Failed to load history.</li>';
+            }
+        }
+
+        document.getElementById('submitWithdrawBtn').addEventListener('click', async function() {
+            if (!currentUser || !appConfig) return showCustomAlert('Error', 'App data not loaded.', '❌');
+
+            const paymentMethodId = document.getElementById('paymentMethod').value;
+            const withdrawAmountInput = document.getElementById('withdrawAmount').value;
+            const paymentAddress = document.getElementById('paymentAddress').value.trim();
+            const selectedMethod = appConfig.paymentMethods.find(m => m.id === paymentMethodId);
+            
+            if (!paymentMethodId || !withdrawAmountInput || !paymentAddress || !selectedMethod) {
+                return showCustomAlert('Error', 'Please fill all details correctly.', '⚠️');
+            }
+            
+            const withdrawAmountInPoints = getRawPoints(withdrawAmountInput);
+            
+            if (isNaN(withdrawAmountInPoints) || withdrawAmountInPoints <= 0) {
+                return showCustomAlert('Error', 'Invalid amount.', '⚠️');
+            }
+            if (withdrawAmountInPoints > currentUser.balance) {
+                return showCustomAlert('Error', 'Insufficient balance.', '❌');
+            }
+            
+            const minWithdraw = selectedMethod.minAmount || appConfig.minWithdrawAmount || 0;
+            if (withdrawAmountInPoints < minWithdraw) {
+                return showCustomAlert('Error', `Minimum withdrawal for this method is ${formatCurrency(minWithdraw)}.`, '⚠️');
+            }
+            
+            const minRefs = appConfig.minReferralForWithdraw || 0;
+            if (minRefs > 0 && (currentUser.referredUsersCount || 0) < minRefs) {
+                 return showCustomAlert('Error', `You need at least ${minRefs} referrals to withdraw.`, '⚠️');
+            }
+
+            this.disabled = true; 
+            
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const userDocRef = db.collection('users').doc(currentUser.userId);
+                    const userDoc = await transaction.get(userDocRef);
+                    if (!userDoc.exists || userDoc.data().balance < withdrawAmountInPoints) {
+                        throw new Error("Insufficient balance!");
+                    }
+                    transaction.update(userDocRef, {
+                        balance: firebase.firestore.FieldValue.increment(-withdrawAmountInPoints)
+                    });
+                    const withdrawalRef = db.collection('withdrawals').doc();
+                    transaction.set(withdrawalRef, {
+                        userId: currentUser.userId,
+                        username: currentUser.username || 'N/A',
+                        amount: withdrawAmountInPoints,
+                        paymentMethodId: paymentMethodId,
+                        paymentMethodName: selectedMethod.name,
+                        paymentAddress: paymentAddress,
+                        status: 'Pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+                
+                showCustomAlert('Submitted!', 'Your withdrawal request has been submitted.', '✅');
+                tg.HapticFeedback.notificationOccurred('success');
+                document.getElementById('withdrawAmount').value = '';
+                document.getElementById('paymentAddress').value = '';
+
+            } catch (error) {
+                console.error("Error submitting withdrawal:", error);
+                showCustomAlert('Error', error.message, '❌');
+            } finally {
+                this.disabled = false; 
+            }
+        });
+
+
+        // Dynamic Tasks Rendering 
+        function renderDynamicTasks() {
+            const list = document.getElementById('dynamicTasksList');
+            list.innerHTML = '';
+            if (!appConfig || !appConfig.dynamicTasks || appConfig.dynamicTasks.length === 0) {
+                list.innerHTML = '<p class="card-desc" style="text-align:center;">No additional tasks available.</p>';
+                return;
+            }
+
+            const today = new Date().toDateString();
+            appConfig.dynamicTasks.forEach(task => {
+                const isCompleted = (currentUser.completedTasks && (currentUser.completedTasks[task.id] === today || (task.type === 'one-time' && currentUser.completedTasks[task.id] === 'completed')));
+                
+                let iconHtml = '';
+                if (task.icon === 'telegram') {
+                    iconHtml = `<div class="task-icon telegram"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6.241 8.809l-2.733 12.872c-.144.646-.516.804-1.077.513l-4.148-3.085-1.996 1.921c-.22.213-.393.385-.758.385l.23-.974 4.326-4.049 4.96-7.85c.218-.352-.063-.535-.477-.384l-6.19 3.868-4.072-1.272c-.633-.198-.992-.303-.98-.644.004-.11.134-.202.408-.315.617-.257 12.409-4.57 13.064-4.82.72-.27 1.341.171 1.054.78z"></path></svg></div>`;
+                } else if (task.icon === 'youtube') {
+                    iconHtml = `<div class="task-icon youtube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.58 7.19c-.23-.86-.9-1.52-1.76-1.75C18.26 5 12 5 12 5s-6.26 0-7.82.44c-.86.23-1.52.89-1.76 1.75C2 8.78 2 12 2 12s0 3.22.42 4.81c.23.86.9 1.52 1.76 1.75C5.74 19 12 19 12 19s6.26 0 7.82-.44c.86-.23 1.52-.89 1.76-1.75C22 15.22 22 12 22 12s0-3.22-.42-4.81zM10 15V9l5.2 3-5.2 3z"></path></svg></div>`;
+                } else {
+                    iconHtml = `<div class="task-icon" style="background:#444;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"></path></svg></div>`;
+                }
+
+                list.innerHTML += `
+                    <div class="task-item">
+                        ${iconHtml}
+                        <div class="task-item-info">
+                            <h4>${task.name}</h4>
+                            <p>${task.description} - Get ${formatCurrency(task.points)}</p>
+                        </div>
+                        <button class="dynamic-task-btn" data-task-id="${task.id}" ${isCompleted ? 'disabled' : ''}>
+                            ${isCompleted ? 'Completed' : 'Claim Bonus'}
+                        </button>
+                    </div>`;
+            });
+
+            document.querySelectorAll('.dynamic-task-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const taskId = event.target.dataset.taskId;
+                    const task = appConfig.dynamicTasks.find(t => t.id === taskId);
+                    if (task) {
+                        showTaskTimer(task.timer || 15, task.link, task.points, task.id);
+                    }
+                });
+            });
+        }
+        
+        // Support Links Rendering 
+        function renderSupportLinks() {
+            const list = document.getElementById('supportLinksList');
+            list.innerHTML = '';
+            if (!appConfig || !appConfig.supportLinks || appConfig.supportLinks.length === 0) {
+                list.innerHTML = '<p class="card-desc" style="text-align:center;">No support channels available.</p>';
+                return;
+            }
+            
+            appConfig.supportLinks.forEach(link => {
+                let iconHtml = '';
+                if (link.icon === 'telegram') {
+                    iconHtml = `<div class="task-icon telegram"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6.241 8.809l-2.733 12.872c-.144.646-.516.804-1.077.513l-4.148-3.085-1.996 1.921c-.22.213-.393.385-.758.385l.23-.974 4.326-4.049 4.96-7.85c.218-.352-.063-.535-.477-.384l-6.19 3.868-4.072-1.272c-.633-.198-.992-.303-.98-.644.004-.11.134-.202.408-.315.617-.257 12.409-4.57 13.064-4.82.72-.27 1.341.171 1.054.78z"></path></svg></div>`;
+                } else if (link.icon === 'video') {
+                     iconHtml = `<div class="task-icon" style="background: #333;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path></svg></div>`;
+                } else { 
+                    iconHtml = `<div class="task-icon" style="background:#555;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg></div>`;
+                }
+                
+                list.innerHTML += `
+                    <div class="task-item">
+                        ${iconHtml}
+                        <div class="task-item-info">
+                            <h4>${link.name}</h4>
+                        </div>
+                        <button class="support-link-btn" data-link="${link.link}">Visit</button>
+                    </div>`;
+            });
+            
+            document.querySelectorAll('.support-link-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const link = e.target.dataset.link;
+                    if(link) tg.openLink(link);
+                });
+            });
+        }
+
+
+        // Main Initialization Function
+        async function initApp() {
+            await fetchAppConfig();
+
+            const tgUser = tg.initDataUnsafe.user;
+            if (!tgUser || !tgUser.id) {
+                return showCustomAlert('Error', 'Could not get Telegram user data.', '❌');
+            }
+
+            const userId = String(tgUser.id);
+            const userDocRef = db.collection('users').doc(userId);
+
+            userDocRef.onSnapshot(async (doc) => {
+                if (doc.exists) {
+                    currentUser = doc.data();
+                    checkDailyReset(currentUser);
+                } else {
+                    // Create new user if not exists
+                    const joiningBonus = appConfig?.joiningBonus || 0;
+                    const newUser = {
+                        userId: userId,
+                        first_name: tgUser.first_name || '',
+                        last_name: tgUser.last_name || '',
+                        username: tgUser.username || '',
+                        photo_url: tgUser.photo_url || defaultProfilePic,
+                        balance: joiningBonus,
+                        totalEarnings: joiningBonus,
+                        dailyTasksCompleted: 0,
+                        totalTasksCompleted: 0,
+                        lastTaskDate: new Date().toDateString(),
+                        referredBy: null, 
+                        referralEarnings: 0,
+                        referredUsersCount: 0,
+                        completedTasks: {},
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    const startParam = tg.initDataUnsafe.start_param;
+                    if (startParam && startParam.startsWith('ref_')) {
+                        const referrerId = startParam.substring(4);
+                        
+                        if (referrerId && referrerId !== userId) { 
+                            newUser.referredBy = referrerId;
+                            const referrerDocRef = db.collection('users').doc(referrerId);
+                            
+                            try {
+                                await db.runTransaction(async (transaction) => {
+                                    const referrerDoc = await transaction.get(referrerDocRef);
+                                    let updates = { referredUsersCount: firebase.firestore.FieldValue.increment(1) };
+                                    const referralBonus = appConfig?.referralBonus || 0;
+                                    if (referralBonus > 0 && referrerDoc.exists) {
+                                        updates.balance = firebase.firestore.FieldValue.increment(referralBonus);
+                                        updates.referralEarnings = firebase.firestore.FieldValue.increment(referralBonus);
+                                        console.log(`Awarding ${referralBonus} points to referrer ${referrerId}`);
+                                    }
+                                    transaction.update(referrerDocRef, updates);
+                                });
+                            } catch (e) {
+                                console.error("Could not update referrer count/bonus.", e);
+                            }
+                        }
+                    }
+
+                    await userDocRef.set(newUser);
+                    currentUser = newUser;
+                    
+                    if (joiningBonus > 0) {
+                         showCustomAlert('Welcome!', `Your account has been created. You received a joining bonus of ${formatCurrency(joiningBonus)}!`, '👋');
+                    } else {
+                         showCustomAlert('Welcome!', 'Your account has been created.', '👋');
+                    }
+                }
+                
+                // UI আপডেট করুন
+                updateUI();
+                
+                // --- নতুন: গ্রিটিং পপআপ কল করা ---
+                showGreetingPopup();
+
+            }, (error) => {
+                console.error("Error listening to user document:", error);
+                showCustomAlert('Error', 'Failed to load user data.', '❌');
+            });
+            
+            // Real-time listener for app config
+             db.collection('config').doc('appConfig').onSnapshot((doc) => {
+                if(doc.exists) {
+                    appConfig = doc.data();
+                    console.log("App config updated in real-time.");
+                    loadMonetagSDK(appConfig.monetagZoneId); 
+                    updateUI();
+                }
+            }, (error) => {
+                 console.error("Error listening to app config:", error);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
